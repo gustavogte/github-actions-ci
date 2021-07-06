@@ -6,10 +6,6 @@ on:
   push:
     branches:
       - master
-#  pull_request:
-#    branches:
-#      - dev
-#      - master
 
 # Las tareas que va a ejecutar el flujo de CI
 jobs:
@@ -21,17 +17,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2 # version de github actions que usaremos
+      - uses: actions/checkout@v2
       - name: Login to Heroku Registry
         env:
-          HEROKU_API_KEY: ${( secrets.HEROKU_API_KEY )}
-        run: heroku container:Login
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku container:login
       - name: Build & push image
         run: |
-              docker build . --tag nosql-api-v2 registry.heroku.com/${( secrets.HEROKU_APP_NAME)}/web nosql-api-v2 -f docker/prod/Dockerfile
-              docker push registry.heroku.com/${( secrets.HEROKU_APP_NAME)}/web
-      - name: realease
-        run: heroku container:realease -a {( secrets.HEROKU_APP_NAME)} web
+              docker build . --tag registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web -f docker/prod/Dockerfile
+              docker push registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      - name: Release
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku container:release -a ${{ secrets.HEROKU_APP_NAME }} web
 
   # Tarea para ejecutar los tests del proyecto
   test:
